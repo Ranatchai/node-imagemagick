@@ -47,6 +47,7 @@ function exec2(file, args /*, options, callback */) {
       return function(chunk) {
         stream.contents += chunk;
         if (!killed && stream.contents.length > options.maxBuffer) {
+          console.log('limitedWrite', stream.contents.length, args);
           child.kill(options.killSignal);
           killed = true;
         }
@@ -134,6 +135,7 @@ function parseIdentify(input) {
 };
 
 exports.identify = function(pathOrArgs, callback) {
+  console.log('identify', pathOrArgs);
   var isCustom = Array.isArray(pathOrArgs),
       isData,
       args = isCustom ? ([]).concat(pathOrArgs) : ['-verbose', pathOrArgs];
@@ -285,14 +287,17 @@ exports.crop = function (options, callback) {
     throw new TypeError("No width or height defined");
   
   if (options.srcPath){
-    var args = options.srcPath;
+    var args = ['-format', '%wx%h-', options.srcPath];
   } else {
-    var args = {
-      data: options.srcData
-    };
+    var args = ['-format', '%wx%h-'];
+    args.data = options.srcData;
   }
 
   exports.identify(args, function(err, meta) {
+    var imgSize = meta.split('-');
+    var srcWidth = imgSize[0];
+    var srcHeight = imgSize[1];
+
     if (err) return callback && callback(err);
     var t         = exports.resizeArgs(options),
         ignoreArg = false,
@@ -318,7 +323,7 @@ exports.crop = function (options, callback) {
       }
       // found the argument after the resize flag; ignore it and set crop options
       if ((arg != "-resize") && ignoreArg) {
-        var dSrc      = meta.width / meta.height,
+        var dSrc      = srcWidth / srcHeight,
             dDst      = t.opt.width / t.opt.height,
             resizeTo  = (dSrc < dDst) ? ''+t.opt.width+'x' : 'x'+t.opt.height,
             dGravity  = options.gravity ? options.gravity : "Center";
