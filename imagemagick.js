@@ -47,7 +47,6 @@ function exec2(file, args /*, options, callback */) {
       return function(chunk) {
         stream.contents += chunk;
         if (!killed && stream.contents.length > options.maxBuffer) {
-          console.log('limitedWrite', stream.contents.length, args);
           child.kill(options.killSignal);
           killed = true;
         }
@@ -135,7 +134,6 @@ function parseIdentify(input) {
 };
 
 exports.identify = function(pathOrArgs, callback) {
-  console.log('identify', pathOrArgs);
   var isCustom = Array.isArray(pathOrArgs),
       isData,
       args = isCustom ? ([]).concat(pathOrArgs) : ['-verbose', pathOrArgs];
